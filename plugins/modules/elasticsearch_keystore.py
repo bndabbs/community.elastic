@@ -16,33 +16,37 @@ author:
     - Bradford Dabbs (@bndabbs)
 version_added: "0.0.1"
 
-description: Add and remove entries in the Elasticsearch keystore. Existing
-entries will not be decrypted, so the module will only compares based on the
-name.
+description:
+  - Add and remove entries in the Elasticsearch keystore.
+    Existing entries will not be decrypted, so the module
+    will only compares based on the name.
 
 options:
     name:
         description: Keystore value to add or remove.
-        required: true
+        required: yes
         type: str
     value:
         description: Data to be stored inside the entry. Required if state=present.
-        required: false
+        required: no
         type: str
     state:
-        required: false
+        required: no
         default: "present"
-        choices: [ present, absent ]
+        type: str
+        choices:
+          - present
+          - absent
         description: "Whether the entry should exist or not, taking action if the state is different from what is stated."
     force:
-        required: false
+        required: no
         default: "no"
-        choices: [ "yes", "no" ]
+        type: bool
         description: "When used with state=present, existing entries with the same name will be replaced."
     create_keystore:
-        required: false
+        required: no
         default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
         description: "Whether to create the keystore if one doesn't already exist."
 '''
 
@@ -103,8 +107,7 @@ def run_module():
     module_args = dict(
         name=dict(type='str', required=True),
         value=dict(type='str', required=False, no_log=True),
-        state=dict(type='str', default='present',
-                   choices=['absent', 'present']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         force=dict(type='bool', required=False, default=False),
         create_keystore=dict(type='bool', required=False, default=True)
     )
@@ -131,41 +134,71 @@ def run_module():
     value = module.params['value']
     create = module.params['create_keystore']
 
-    keystore_cmd = module.get_bin_path('elasticsearch-keystore', required=True, opt_dirs=['/usr/share/elasticsearch/bin'])
-    rc, current_keys, err = module.run_command(
-        "%s list" % (keystore_cmd))
-    if rc == 65:
-        if create:
-            if module.check_mode:
-                changed = True
+    try:
+        keystore_cmd = module.get_bin_path('elasticsearch-keystore', required=True, opt_dirs=['/usr/share/elasticsearch/bin'])
+        rc, current_keys, err = module.run_command("%s list" % (keystore_cmd))
+        if rc == 65:
+            if create:
+                if module.check_mode:
+                    changed = True
+                else:
+                    module.run_command("%s create" % (keystore_cmd), check_rc=True)
             else:
-                rc, current_keys, err = module.run_command(
-                "%s create" % (keystore_cmd))
-        else:
-            module.fail_json(
-                msg="Keystore not found and create_keystore=no.", rc=rc, err=err)
-    if rc != 0:
-        module.fail_json(
-            msg="Failed executing elasticsearch-keystore command.", rc=rc, err=err)
+                raise OSError(
+                    msg="Failed executing elasticsearch-keystore command.", rc=rc, err=err)
+        elif rc != 0:
+            raise OSError(rc, err)
 
-    keys = parse_keys(current_keys)
-    key_exists = [key for key in keys if key['name'] == name]
+        keys = parse_keys(current_keys)
+        key_exists = [key for key in keys if key['name'] == name]
 
-    if module.check_mode:
-        if key_exists:
-            if state == 'present':
-                if not force:
-                    msg = "Key %s is already present. Not overwriting as force=no." % (
-                        name)
+        if module.check_mode:
+            if key_exists:
+                if state == 'present':
+                    if not force:
+                        msg = "Key %s is already present. Not overwriting as force=no." % (
+                            name)
+                        changed = False
+                if state == 'absent':
+                    changed = True
+                    msg = "Removed %s from keystore" % (name)
+            else:
+                if state == 'present':
+                    changed = True
+                    msg = "Added %s to keystore" % (name)
+                if state == 'absent':
                     changed = False
-            if state == 'absent':
-                changed = True
-                msg = "Removed %s from keystore" % (name)
-        else:
-            if state == 'present':
+                    msg = "Nothing to do."
+
+            result['key'] = name
+            result['message'] = msg
+            result['changed'] = changed
+
+            module.exit_json(**result)
+
+        if state == 'present':
+            if key_exists:
+                if not force:
+                    msg = "Key %s is already present. Not overwriting as force=no." % (name)
+                    changed = False
+                else:
+                    module.run_command(
+                        "%s add -f -s -x %s" % (keystore_cmd, name), data=value, check_rc=True)
+                    changed = True
+                    msg = "Added %s to keystore" % (name)
+            else:
+                module.run_command(
+                    "%s add -x %s" % (keystore_cmd, name), data=value, check_rc=True)
                 changed = True
                 msg = "Added %s to keystore" % (name)
-            if state == 'absent':
+
+        if state == 'absent':
+            if key_exists:
+                module.run_command(
+                    "%s remove %s" % (keystore_cmd, name), check_rc=True)
+                changed = True
+                msg = "Removed %s from keystore" % (name)
+            else:
                 changed = False
                 msg = "Nothing to do."
 
@@ -174,50 +207,10 @@ def run_module():
         result['changed'] = changed
 
         module.exit_json(**result)
-
-    if state == 'present':
-        if key_exists:
-            if not force:
-                msg = "Key %s is already present. Not overwriting as force=no." % (name)
-                changed = False
-            else:
-                rc, _, err = module.run_command(
-                    "%s add -f -s -x %s" % (keystore_cmd, name), data=value)
-                if rc == 0:
-                    changed = True
-                    msg = "Added %s to keystore" % (name)
-                else:
-                    module.fail_json(
-                        msg="Failed to add %s to the keystore" % (name), rc=rc, err=err)
-        else:
-            rc, _, err = module.run_command(
-                "%s add -x %s" % (keystore_cmd, name), data=value)
-            if rc == 0:
-                changed = True
-                msg = "Added %s to keystore" % (name)
-            else:
-                module.fail_json(
-                    msg="Failed to add %s to the keystore" % (name), rc=rc, err=err)
-
-    if state == 'absent':
-        if key_exists:
-            rc, _, err = module.run_command(
-                "%s remove %s" % (keystore_cmd, name))
-            if rc == 0:
-                changed = True
-                msg = "Removed %s from keystore" % (name)
-            else:
-                module.fail_json(
-                    msg="Failed to remove %s from the keystore" % (name), rc=rc, err=err)
-        else:
-            changed = False
-            msg = "Nothing to do."
-
-    result['key'] = name
-    result['message'] = msg
-    result['changed'] = changed
-
-    module.exit_json(**result)
+    except OSError as cmd_err:
+        module.fail_json(msg='OS Error: %s' % (cmd_err))
+    except Exception as excep:
+        module.fail_json(msg="Failed with: %s" % (excep))
 
 
 def main():
