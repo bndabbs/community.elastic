@@ -140,7 +140,7 @@
 - name: Make sure Elasticsearch is ready
   block:
     - name: Start and Enable Elasticsearch Service
-      systemd:
+      ansible.builtin.systemd:
         name: "{{ es_service_name }}"
         state: started
         enabled: true
