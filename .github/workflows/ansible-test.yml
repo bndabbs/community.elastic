@@ -125,7 +125,7 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: pip install docker elasticsearch requests coverage
+          command: pip install docker elasticsearch requests coverage six
 
       - name: Install ansible-base (${{ matrix.ansible_version }})
         uses: nick-invision/retry@v2
@@ -156,7 +156,7 @@ jobs:
           command: ansible-galaxy collection install ansible.posix -p ansible_collections/
 
       - name: Run integration tests on Python ${{ matrix.python_version }} | ${{ matrix.ansible_version }}
-        run: ansible-test integration -v --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
+        run: ansible-test integration -v --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
 
       - name: Upload Coverage data
         run: tests/coverage.sh
