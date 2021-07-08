@@ -31,7 +31,8 @@
       state: absent
     register: key_delete
 
-  - assert:
+  - name: Run assertions
+    assert:
       that:
         - "key_add is changed"
         - "key_replace is not changed"

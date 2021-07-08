@@ -1,6 +1,0 @@
----
-roles:
-  - name: community.elastic.elasticsearch
-collections:
-  - community.general
-  - ansible.posix
