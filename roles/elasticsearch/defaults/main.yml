@@ -1,0 +1,137 @@
+es_version:
+    major: 7
+    minor: 11
+    patch: 1
+es_api_port: 9200
+es_transport_port: 9300
+es_auto_create_index: true
+es_network_host: "{{ ansible_host }}"
+es_config: {}
+
+# Operating System Settings
+es_group: elasticsearch
+es_user: elasticsearch
+es_max_open_files: 65536
+es_max_map_count: 262144
+es_heap_size: 1g
+es_service_name: elasticsearch
+es_systemd_overrides:
+  - option: EnvironmentFile
+    value: "{{ es_env_override_file }}"
+    section: Service
+  - option: LimitMEMLOCK
+    value: infinity
+    section: Service 
+es_manage_firewalld: false
+es_manage_ufw: false
+
+# JVM custom parameters
+es_java_home: ""
+es_jvm_custom_parameters: ""
+es_heap_dump_path: "/var/lib/elasticsearch"
+
+# Filesystem Paths
+es_conf_dir: /etc/elasticsearch
+es_data_dirs:
+  - path: /var/lib/elasticsearch
+    mode: "2750"
+es_log_dir: /var/log/elasticsearch
+es_pid_dir: /var/run/elasticsearch
+es_home: /usr/share/elasticsearch
+es_tmp_dir: /tmp
+es_systemd_override_dir: "/etc/systemd/system/{{ es_service_name }}.conf.d"
+es_systemd_override_file: "{{ es_systemd_override_dir }}/override.conf"
+es_jvm_override_dir: "{{ es_conf_dir }}/jvm.options.d"
+es_jvm_override_file: "{{ es_jvm_override_dir }}/overrides"
+es_env_override_file: "{{ es_conf_dir }}/env-overrides"
+es_other_dirs:
+  - path: "{{ es_conf_dir }}"
+    mode: "2755"
+    owner: root
+  - path: "{{ es_pid_dir }}"
+    mode: "0755"
+  - path: "{{ es_log_dir }}"
+    mode: "2750"
+  - path: "{{ es_systemd_override_dir }}"
+    mode: "0755"
+  - path: "{{ es_jvm_override_dir }}"
+    mode: "0755"
+es_managed_dirs: "{{ es_data_dirs + es_other_dirs }}"
+es_license: lookup('file','license.json')
+
+# Imports
+es_api_imports: []
+es_pki_files:
+  ssl_key: "{{ es_ssl_key }}"
+  ssl_keystore: "{{ es_ssl_keystore }}"
+  ssl_cert: "{{ es_ssl_certificate }}"
+  ssl_ca: "{{ es_ssl_ca }}"
+es_keystore_entries: []
+es_import_license: false
+
+# Package Install Options
+es_version_lock: true
+es_allow_downgrade: true
+es_allow_upgrade: true
+es_manage_repository: true
+es_repo_base: "https://artifacts.elastic.co"
+es_package_key: "{{ es_repo_base }}/GPG-KEY-elasticsearch"
+es_package_key_fingerprint: "4609 5ACC 8548 582C 1A26 99A9 D27D 666C D88E 42B4"
+es_apt_url: "deb {{ es_repo_base }}/packages/{{ es_version.major }}.x/apt stable main"
+es_rpm_url: "{{ es_repo_base }}/packages/{{ es_version.major }}.x/yum"
+es_package_name: elasticsearch
+es_package_version: "{{ es_version | dict2items | join('.', attribute='value') }}"
+es_dpkg_options: 
+  - force-confdef
+  - force-confold
+  - "{{ es_allow_downgrade | ternary('force-downgrade,force-hold', '') }}"
+  - "{{ es_allow_upgrade | ternary('force-hold', '') }}"
+
+# SSL/TLS parameters
+es_enable_auto_ssl_configuration: true
+es_enable_ssl: false
+es_ssl_upload: true
+es_ssl_keystore: ""
+es_ssl_truststore: ""
+es_ssl_key: ""
+es_ssl_certificate: ""
+es_ssl_ca: ""
+es_ssl_cert_path: "{{ es_conf_dir }}"
+es_ssl_verification: "certificate"
+
+es_validate_certs: true
+es_delete_unmanaged_file: true
+es_delete_unmanaged_native: true
+
+## These are used for xpack.security.* in elasticsearch.yml.
+##
+## Setting a value in es_ssl will apply it to both http and
+## transport. You can override either one by setting es_http
+## or es_transport directly.
+
+es_ssl: &ssl_params
+  ssl.enabled: "{{ es_enable_ssl }}"
+  ssl.keystore.path: "{{ es_ssl_keystore | basename }}"
+  ssl.truststore.path: "{{ es_ssl_truststore | basename }}"
+  ssl.key: "{{ es_ssl_key | basename }}"
+  ssl.certificate: "{{ es_ssl_certificate | basename }}"
+  ssl.certificate_authorities: "{{ es_ssl_ca | basename }}"
+  ssl.verification_mode: "{{ es_ssl_verification }}"
+
+es_http:
+  <<: *ssl_params
+es_transport:
+  <<: *ssl_params
+
+es_api_scheme: "{{ es_enable_ssl | ternary('https', 'http') }}"
+es_api:
+  user: ""
+  password: ""
+  hosts: []
+  auth_method: "{{ es_enable_ssl | ternary('http_auth', '') }}"
+  auth_scheme: "{{ es_api_scheme }}"
+  ca_file: "{{ [es_ssl_cert_path, es_ssl_ca] | join('/') | default('') }}"
+
+# Authentication
+es_roles:
+es_users:

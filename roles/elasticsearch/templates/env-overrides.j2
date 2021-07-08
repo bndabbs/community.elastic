@@ -1,0 +1,19 @@
+ES_HOME={{es_home}}
+ES_TMPDIR={{ es_tmp_dir }}
+{% if es_java_home is defined and es_java_home | length > 0 %}
+JAVA_HOME={{ es_java_home }}
+{% endif %}
+ES_PATH_CONF={{ es_conf_dir }}
+PID_DIR={{ es_pid_dir }}
+{% if es_proxy_host is defined and es_proxy_host != '' %}
+ES_JAVA_OPTS="-Dhttp.proxyHost={{ es_proxy_host }} -Dhttp.proxyPort={{ es_proxy_port }} -Dhttps.proxyHost={{ es_proxy_host }} -Dhttps.proxyPort={{ es_proxy_port }}"
+{% endif %}
+{% if es_max_open_files is defined %}
+MAX_OPEN_FILES={{es_max_open_files}}
+{% endif %}
+{% if m_lock_enabled is defined and m_lock_enabled %}
+MAX_LOCKED_MEMORY=unlimited
+{% endif %}
+{% if es_max_map_count is defined %}
+MAX_MAP_COUNT={{es_max_map_count}}
+{% endif %}

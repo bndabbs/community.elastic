@@ -1,0 +1,42 @@
+---
+
+- name: Configure YUM/DNF Repository
+  when: es_manage_repository
+  block:
+    - name: Trust Elastic GPG key
+      rpm_key:
+        state: present
+        key: "{{ es_package_key }}"
+        fingerprint: 4609 5ACC 8548 582C 1A26 99A9 D27D 666C D88E 42B4
+
+    - name: Add Elastic Repo
+      yum_repository:
+        name: elastic-{{ es_version.major }}.x
+        description: Elastic repository for {{ es_version.major }}.x packages
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: "{{ es_package_key }}"
+        baseurl: "{{ es_rpm_url }}"
+        file: elastic
+
+- name: Install version-lock Plugin
+  yum:
+    name: yum-plugin-versionlock
+    state: present
+  when: es_version_lock
+
+- name: Install RPM Package
+  yum:
+    name: "{{ es_custom_package_url is defined | ternary(es_custom_package_url, '-'.join((es_package_name, es_package_version))) }}"
+    state: present
+    allow_downgrade: "{{ es_allow_downgrade }}"
+    disable_plugin: "{{ es_allow_upgrade | ternary('versionlock', omit) }}"
+  notify: Restart Elasticsearch
+  environment:
+    ES_PATH_CONF: "{{ es_conf_dir }}"
+
+- name: Lock Elasticsearch Version
+  community.general.yum_versionlock:
+    state: present
+    name: "{{ es_package_name }}"
+  when: es_version_lock

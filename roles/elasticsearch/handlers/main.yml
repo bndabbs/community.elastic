@@ -1,0 +1,16 @@
+---
+
+- name: Restart Elasticsearch Service
+  systemd:
+    name: "{{ es_service_name }}"
+    state: restarted
+    enabled: yes
+    daemon_reload: yes
+  listen: Restart Elasticsearch
+  register: Restart
+
+- name: Wait for Elasticsearch to Become Ready
+  wait_for:
+    host: "{{ es_network_host }}"
+    port: "{{ es_api_port }}"
+  listen: Restart Elasticsearch

@@ -1,13 +1,6 @@
 ---
 - name: Run tasks inside ES container
-  vars:
-    ansible_connection: community.docker.docker_api
-    ansible_host: single-node-01
-    ansible_python_interpreter: /usr/libexec/platform-python
-    ansible_remote_tmp: /tmp
-    ansible_user: elasticsearch
   block:
-
   - name: Attempt to add a new key
     community.elastic.elasticsearch_keystore:
       name: "es_pass"

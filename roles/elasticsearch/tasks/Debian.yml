@@ -1,0 +1,42 @@
+---
+
+- name: Configure APT Repository
+  when: es_manage_repository
+  block:
+    - name: Install apt-transport-https to Support HTTPS APT Downloads
+      ansible.builtin.apt:
+        name: apt-transport-https
+        state: present
+
+    - name: Add Elasticsearch Repository Key
+      ansible.builtin.apt_key:
+        url: "{{ es_package_key }}"
+        id: "{{ es_package_key_fingerprint | replace(' ', '') }}"
+        state: present
+
+    - name: Update APT Cache
+      ansible.builtin.apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Add APT Repository
+      ansible.builtin.apt_repository:
+        repo: '{{ es_apt_url }}'
+        state: present
+
+- name: Install Package
+  ansible.builtin.apt:
+    name: "{{ es_custom_package_url is defined | ternary(omit, '='.join((es_package_name, es_package_version))) }}"
+    deb: "{{ es_custom_package_url is defined | ternary(es_custom_package_url, omit) }}"
+    dpkg_options: "{{ es_dpkg_options | select | list | unique | join(',') }}"
+    force: "{{ es_allow_downgrade | bool }}"
+    state: present
+  notify: Restart Elasticsearch
+  environment:
+    ES_PATH_CONF: "{{ es_conf_dir }}"
+
+- name: Hold/Unhold Elasticsearch Version
+  ansible.builtin.dpkg_selections:
+    name: "{{ es_package_name }}"
+    selection: "{{ es_version_lock | ternary('hold', 'unhold') }}"
+  when: es_version_lock

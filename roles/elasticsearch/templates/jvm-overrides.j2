@@ -1,0 +1,53 @@
+## JVM configuration
+
+################################################################
+## IMPORTANT: JVM heap size
+################################################################
+##
+## You should always set the min and max JVM heap
+## size to the same value. For example, to set
+## the heap to 4 GB, set:
+##
+## -Xms4g
+## -Xmx4g
+##
+## See https://www.elastic.co/guide/en/elasticsearch/reference/current/heap-size.html
+## for more information
+##
+################################################################
+
+# Xms represents the initial size of total heap space
+# Xmx represents the maximum size of total heap space
+-Xms{{ es_heap_size }}
+-Xmx{{ es_heap_size }}
+
+################################################################
+## Expert settings
+################################################################
+##
+## All settings below this section are considered
+## expert settings. Don't tamper with them unless
+## you understand what you are doing
+##
+################################################################
+
+## heap dumps
+
+# specify an alternative path for heap dumps; ensure the directory exists and
+# has sufficient space
+-XX:HeapDumpPath={{ es_heap_dump_path }}
+
+# specify an alternative path for JVM fatal error logs
+-XX:ErrorFile={{ es_log_dir }}/hs_err_pid%p.log
+
+## JDK 8 GC logging
+8:-Xloggc:{{ es_log_dir }}/gc.log
+
+# JDK 9+ GC logging
+9-:-Xlog:gc*,gc+age=trace,safepoint:file={{ es_log_dir }}/gc.log:utctime,pid,tags:filecount=32,filesize=64m
+
+{% if es_jvm_custom_parameters !='' %}
+{% for item in es_jvm_custom_parameters %}
+{{ item }}
+{% endfor %}
+{% endif %}

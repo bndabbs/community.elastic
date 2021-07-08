@@ -1,0 +1,1 @@
+{{ es_config | to_nice_yaml(indent=2) }}

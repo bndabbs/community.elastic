@@ -1,0 +1,153 @@
+---
+
+- name: Create Elasticsearch system group
+  ansible.builtin.group:
+    name: "{{ es_group }}"
+    state: present
+    system: yes
+    gid: "{{ es_group_id | default(omit) }}"
+  notify: Restart Elasticsearch
+
+- name: Create Elasticsearch system user
+  ansible.builtin.user:
+    name: "{{ es_user }}"
+    state: present
+    comment: elasticsearch system user
+    system: yes
+    createhome: no
+    uid: "{{ es_user_id | default(omit) }}"
+    group: "{{ es_group }}"
+  notify: Restart Elasticsearch
+
+- name: Include distribution specific tasks
+  include_tasks: "{{ ansible_os_family }}.yml"
+
+- name: Create directories and set permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default(es_user) }}"
+    group: "{{ item.group | default(es_group) }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ es_managed_dirs }}"
+
+- name: Template configuration override files
+  ansible.builtin.template:
+    src: "{{ item.name }}.j2"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default(es_group) }}"
+    mode: "{{ item.mode | default(0660) }}"
+    force: "{{ item.force | default(omit) }}"
+  notify: Restart Elasticsearch
+  loop:
+    - name: env-overrides
+      dest: "{{ es_env_override_file }}"
+    - name: jvm-overrides
+      dest: "{{ es_jvm_override_file }}"
+
+- name: Load ES fragments
+  ansible.builtin.set_fact:
+    content: "{{ lookup('template', item) | from_yaml }}"
+  register: fragment_content
+  loop: "{{ query('fileglob', 'templates/*.es_conf.frag') | sort }}"
+
+- name: Create configuration file from fragments
+  ansible.builtin.copy:
+    content: "{{ fragment_content.results | map(attribute='ansible_facts.content') | from_yaml_all | combine | to_yaml }}"
+    dest: "{{ es_conf_dir }}/elasticsearch.yml"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default(es_group) }}"
+    mode: 0660
+  when: fragment_content.results | length > 0
+  notify: Restart Elasticsearch
+
+- name: Make Sure Drop-in file Exists
+  ansible.builtin.file:
+    path: "{{ es_systemd_override_file }}"
+    state: touch
+    owner: root
+    group: "{{ es_group }}"
+    mode: 0644
+    access_time: preserve
+    modification_time: preserve
+
+- name: Configure systemd drop in entries
+  community.general.ini_file:
+    path: "{{ es_systemd_override_file }}"
+    section: "{{ item.section | default('Service') }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    state: "{{ item.state | default('present') }}"
+    owner: root
+    group: "{{ es_group }}"
+    mode: 0644
+  notify: Restart Elasticsearch
+  loop: "{{ es_systemd_overrides is iterable | ternary(es_systemd_overrides, []) }}"
+
+- name: Copy certificates to Elasticsearch directory
+  ansible.builtin.copy:
+    src: "{{ item.value }}"
+    dest: "{{ es_ssl_cert_path }}/{{ item.value | basename }}"
+    group: "{{ es_group }}"
+    mode: 0640
+  notify: Restart Elasticsearch
+  when: item.value
+  loop: "{{ es_pki_files | dict2items }}"
+
+- name: Set vm.max_map_count to required value
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: "{{ es_max_map_count }}"
+    sysctl_set: yes
+    ignoreerrors: yes
+    state: present
+    reload: yes
+  notify: Restart Elasticsearch
+
+- name: Add keystore entries
+  community.elastic.elasticsearch_keystore:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: "{{ item.state | default('present') }}"
+  notify: Restart Elasticsearch
+  loop: "{{ es_keystore_entries is iterable | ternary(es_keystore_entries, []) }}"
+
+- name: Allow Ports in Firewalld
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  when: es_manage_firewalld
+  loop:
+    - "{{ es_api_port }}/tcp"
+    - "{{ es_transport_port }}/tcp"
+
+- name: Allow ports in UFW
+  community.general.ufw:
+    port: "{{ item }}"
+    proto: tcp
+    rule: allow
+  when: es_manage_ufw
+  loop:
+    - "{{ es_api_port }}"
+    - "{{ es_transport_port }}"
+
+- name: Flush Handlers
+  meta: flush_handlers
+
+- name: Make sure Elasticsearch is ready
+  block:
+    - name: Start and Enable Elasticsearch Service
+      systemd:
+        name: "{{ es_service_name }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    - name: Wait for Elasticsearch to become ready
+      wait_for:
+        host: "{{ es_network_host }}"
+        port: "{{ es_api_port }}"
+  when: Restart is undefined
