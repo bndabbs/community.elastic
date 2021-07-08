@@ -1,0 +1,4 @@
+integration_tests_dependencies:
+- community.general
+- community.docker
+- ansible.posix
