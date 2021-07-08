@@ -3,6 +3,11 @@
 - name: Configure APT Repository
   when: es_manage_repository
   block:
+    - name: Install python-apt
+      ansible.builtin.pip:
+        name:
+          - apt
+
     - name: Install apt-transport-https to Support HTTPS APT Downloads
       ansible.builtin.apt:
         name: apt-transport-https
