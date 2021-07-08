@@ -6,7 +6,7 @@
     - name: Install python-apt
       ansible.builtin.pip:
         name:
-          - apt
+          - python-apt
 
     - name: Install apt-transport-https to Support HTTPS APT Downloads
       ansible.builtin.apt:
