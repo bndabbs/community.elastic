@@ -6,7 +6,6 @@
     state: present
     system: yes
     gid: "{{ es_group_id | default(omit) }}"
-  notify: Restart Elasticsearch
 
 - name: Create Elasticsearch system user
   ansible.builtin.user:
@@ -17,7 +16,6 @@
     createhome: no
     uid: "{{ es_user_id | default(omit) }}"
     group: "{{ es_group }}"
-  notify: Restart Elasticsearch
 
 - name: Include distribution specific tasks
   include_tasks: "{{ ansible_os_family }}.yml"
