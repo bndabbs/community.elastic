@@ -13,17 +13,17 @@
       ansible.builtin.apt_repository:
         repo: '{{ es_apt_url }}'
         state: present
-        install_python_apt: yes
 
     - name: Install apt-transport-https to Support HTTPS APT Downloads
       ansible.builtin.apt:
         name: apt-transport-https
+        update_cache: yes
         state: present
 
-    - name: Update APT Cache
-      ansible.builtin.apt:
-        update_cache: yes
-      changed_when: false
+- name: Update APT Cache
+  ansible.builtin.apt:
+    update_cache: yes
+  changed_when: false
 
 - name: Install Package
   ansible.builtin.apt:
