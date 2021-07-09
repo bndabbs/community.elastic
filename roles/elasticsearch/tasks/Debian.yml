@@ -7,6 +7,7 @@
       ansible.builtin.apt_repository:
         repo: '{{ es_apt_url }}'
         state: present
+        install_python_apt: yes
 
     - name: Install apt-transport-https to Support HTTPS APT Downloads
       ansible.builtin.apt:
