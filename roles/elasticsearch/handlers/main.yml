@@ -13,4 +13,5 @@
   wait_for:
     host: "{{ es_network_host }}"
     port: "{{ es_api_port }}"
+    timeout: 60
   listen: Restart Elasticsearch
