@@ -138,6 +138,8 @@ jobs:
           timeout_minutes: 3
           max_attempts: 3
           command: |
+            sudo apt-get update
+            sudo apt-get install python-distutils-extra python3-distutils python-apt python3-apt
             pip install -U pip
             pip install \
             docker \
@@ -159,7 +161,7 @@ jobs:
         run: ansible-galaxy collection install -r tests/requirements.yml -p $GITHUB_WORKSPACE/ansible_collections
 
       - name: Run integration tests on Python ${{ matrix.python_version }} | ${{ matrix.ansible_version }}
-        run: ansible-test integration -v --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
+        run: ansible-test integration -v --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
 
       - name: Upload Coverage data
         run: tests/coverage.sh
