@@ -94,21 +94,25 @@ jobs:
 
   integration:
     needs: integration_matrix
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: ansible_collections/community/elastic
     strategy:
       fail-fast: false
       matrix:
-        python_version:
-          - "3.6"
-          - "2.7"
-        elastic_module: ${{ fromJson(needs.integration_matrix.outputs.matrix) }}
         ansible_version:
           - stable-2.11
           - stable-2.10
           - devel
+        include:
+          - os: ubuntu-18.04
+            python_version:
+              - "2.7"
+          - os: ubuntu-20.04
+            python_version:
+              - "3.6"
+        elastic_module: ${{ fromJson(needs.integration_matrix.outputs.matrix) }}
     steps:
 
       - name: Check out code
@@ -116,10 +120,10 @@ jobs:
         with:
           path: ansible_collections/community/elastic
 
-      - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python_version }}
+      # - name: Set up Python ${{ matrix.python_version }}
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: ${{ matrix.python_version }}
 
       - name: Install python packages
         uses: nick-invision/retry@v2
@@ -139,10 +143,7 @@ jobs:
         run: ansible-galaxy collection install -r tests/requirements.yml -p $GITHUB_WORKSPACE/ansible_collections
 
       - name: Run integration tests on Python ${{ matrix.python_version }} | ${{ matrix.ansible_version }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install python-distutils-extra python-apt python3-apt
-          ansible-test integration -v --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
+        run: ansible-test integration -v --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
 
       - name: Upload Coverage data
         run: tests/coverage.sh
