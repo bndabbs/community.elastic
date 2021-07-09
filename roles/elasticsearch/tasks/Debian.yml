@@ -29,7 +29,6 @@
     name: "{{ es_custom_package_url is defined | ternary(omit, '='.join((es_package_name, es_package_version))) }}"
     deb: "{{ es_custom_package_url is defined | ternary(es_custom_package_url, omit) }}"
     dpkg_options: "{{ es_dpkg_options | select | list | unique | join(',') }}"
-    force: "{{ es_allow_downgrade | bool }}"
     state: present
   notify: Restart Elasticsearch
   environment:

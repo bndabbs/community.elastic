@@ -71,7 +71,6 @@ es_import_license: false
 
 # Package Install Options
 es_version_lock: true
-es_allow_downgrade: true
 es_allow_upgrade: true
 es_manage_repository: true
 es_repo_base: "https://artifacts.elastic.co"
@@ -84,7 +83,6 @@ es_package_version: "{{ es_version | dict2items | join('.', attribute='value') }
 es_dpkg_options: 
   - force-confdef
   - force-confold
-  - "{{ es_allow_downgrade | ternary('force-downgrade,force-hold', '') }}"
   - "{{ es_allow_upgrade | ternary('force-hold', '') }}"
 
 # SSL/TLS parameters
