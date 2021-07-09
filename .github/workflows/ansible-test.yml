@@ -19,7 +19,7 @@ jobs:
           path: ansible_collections/community/elastic
 
       - name: Set up Python 3.6
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: 3.6
 
@@ -116,7 +116,7 @@ jobs:
           path: ansible_collections/community/elastic
 
       - name: Set up Python ${{ matrix.python_version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python_version }}
 
