@@ -137,7 +137,15 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: pip install -U docker elasticsearch requests coverage six https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz
+          command: |
+            pip install \
+            docker \
+            elasticsearch \
+            requests \
+            "coverage<5.0.0,>=4.5.1" \
+            junit-xml \
+            six \
+            https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz
 
       # - name: Install ansible-base (${{ matrix.ansible_version }})
       #   uses: nick-invision/retry@v2
