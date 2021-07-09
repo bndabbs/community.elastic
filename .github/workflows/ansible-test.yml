@@ -107,11 +107,9 @@ jobs:
           - devel
         include:
           - os: ubuntu-18.04
-            python_version:
-              - "2.7"
+            python_version: "2.7"
           - os: ubuntu-20.04
-            python_version:
-              - "3.6"
+            python_version: "3.6"
         elastic_module: ${{ fromJson(needs.integration_matrix.outputs.matrix) }}
     steps:
 
