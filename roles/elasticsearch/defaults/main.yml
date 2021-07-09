@@ -5,7 +5,7 @@ es_version:
 es_api_port: 9200
 es_transport_port: 9300
 es_auto_create_index: true
-es_network_host: "{{ ansible_host }}"
+es_network_host: "127.0.0.1"
 es_config: {}
 
 # Operating System Settings

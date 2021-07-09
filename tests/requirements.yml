@@ -1,4 +1,6 @@
-integration_tests_dependencies:
+---
+roles: []
+collections:
 - community.general
 - community.docker
 - ansible.posix
