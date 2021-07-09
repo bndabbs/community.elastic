@@ -3,6 +3,11 @@
 - name: Configure APT Repository
   when: es_manage_repository
   block:
+    - name: Add APT Repository
+      ansible.builtin.apt_repository:
+        repo: '{{ es_apt_url }}'
+        state: present
+
     - name: Install apt-transport-https to Support HTTPS APT Downloads
       ansible.builtin.apt:
         name: apt-transport-https
@@ -18,11 +23,6 @@
       ansible.builtin.apt:
         update_cache: yes
       changed_when: false
-
-    - name: Add APT Repository
-      ansible.builtin.apt_repository:
-        repo: '{{ es_apt_url }}'
-        state: present
 
 - name: Install Package
   ansible.builtin.apt:
