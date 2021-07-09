@@ -135,7 +135,7 @@ jobs:
           command: pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz --disable-pip-version-check
 
       - name: Install Dependent Collections
-        run: ansible-galaxy collection install -r tests/requirements.yml -p ansible_collections/
+        run: ansible-galaxy collection install -r tests/requirements.yml
 
       - name: Run integration tests on Python ${{ matrix.python_version }} | ${{ matrix.ansible_version }}
         run: ansible-test integration -v --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
