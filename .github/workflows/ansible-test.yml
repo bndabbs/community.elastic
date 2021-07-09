@@ -139,6 +139,8 @@ jobs:
 
       - name: Run integration tests on Python ${{ matrix.python_version }} | ${{ matrix.ansible_version }}
         run: ansible-test integration -vv --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
+        env:
+          ANSIBLE_PYTHON_INTERPRETER: /opt/hostedtoolcache/Python/${{ matrix.python_version }}/x64/bin/python
 
       - name: Upload Coverage data
         run: tests/coverage.sh
