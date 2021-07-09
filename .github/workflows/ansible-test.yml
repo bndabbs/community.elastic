@@ -125,14 +125,14 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: pip install docker elasticsearch requests coverage six
+          command: pip install docker elasticsearch requests coverage six https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz
 
-      - name: Install ansible-base (${{ matrix.ansible_version }})
-        uses: nick-invision/retry@v2
-        with:
-          timeout_minutes: 3
-          max_attempts: 3
-          command: pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz --disable-pip-version-check
+      # - name: Install ansible-base (${{ matrix.ansible_version }})
+      #   uses: nick-invision/retry@v2
+      #   with:
+      #     timeout_minutes: 3
+      #     max_attempts: 3
+      #     command: pip install  --disable-pip-version-check
 
       - name: Install Dependent Collections
         run: ansible-galaxy collection install -r tests/requirements.yml -p $GITHUB_WORKSPACE/ansible_collections
