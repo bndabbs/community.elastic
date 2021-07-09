@@ -132,7 +132,7 @@ jobs:
         with:
           timeout_minutes: 3
           max_attempts: 3
-          command: pip install https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz --disable-pip-version-check
+          command: pip install virtualenv https://github.com/ansible/ansible/archive/${{ matrix.ansible_version }}.tar.gz --disable-pip-version-check
 
       - name: Install Dependent Collections
         run: ansible-galaxy collection install -r tests/requirements.yml -p $GITHUB_WORKSPACE/ansible_collections
