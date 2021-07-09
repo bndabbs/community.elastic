@@ -138,6 +138,7 @@ jobs:
           timeout_minutes: 3
           max_attempts: 3
           command: |
+            pip install -U pip
             pip install \
             docker \
             elasticsearch \
