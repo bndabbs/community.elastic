@@ -141,9 +141,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install python-apt
-          ansible-test integration -vv --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
-        env:
-          ANSIBLE_PYTHON_INTERPRETER: /opt/hostedtoolcache/Python/${{ matrix.python_version }}/x64/bin/python
+          ansible-test integration -vv --venv-system-site-packages --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
 
       - name: Upload Coverage data
         run: tests/coverage.sh
