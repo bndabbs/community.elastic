@@ -101,12 +101,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: 
+          - ubuntu-18.04
+          - ubuntu-20.04
         ansible_version:
           - stable-2.11
           - stable-2.10
           - devel
-        include:
+        python_version:
+          - "3.9"
+          - "3.6"
+          - "2.7"
+        exclude:
           - os: ubuntu-18.04
+            python_version: "3.9"
+          - os: ubuntu-20.04
             python_version: "2.7"
           - os: ubuntu-20.04
             python_version: "3.6"
