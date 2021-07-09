@@ -5,3 +5,4 @@ skip/osx
 skip/macos
 skip/freebsd
 skip/docker
+skip/python2
