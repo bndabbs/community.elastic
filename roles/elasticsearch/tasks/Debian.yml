@@ -3,6 +3,12 @@
 - name: Configure APT Repository
   when: es_manage_repository
   block:
+    - name: Add Elasticsearch Repository Key
+      ansible.builtin.apt_key:
+        url: "{{ es_package_key }}"
+        id: "{{ es_package_key_fingerprint | replace(' ', '') }}"
+        state: present
+
     - name: Add APT Repository
       ansible.builtin.apt_repository:
         repo: '{{ es_apt_url }}'
@@ -12,12 +18,6 @@
     - name: Install apt-transport-https to Support HTTPS APT Downloads
       ansible.builtin.apt:
         name: apt-transport-https
-        state: present
-
-    - name: Add Elasticsearch Repository Key
-      ansible.builtin.apt_key:
-        url: "{{ es_package_key }}"
-        id: "{{ es_package_key_fingerprint | replace(' ', '') }}"
         state: present
 
     - name: Update APT Cache

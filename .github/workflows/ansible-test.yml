@@ -138,7 +138,7 @@ jobs:
         run: ansible-galaxy collection install -r tests/requirements.yml -p $GITHUB_WORKSPACE/ansible_collections
 
       - name: Run integration tests on Python ${{ matrix.python_version }} | ${{ matrix.ansible_version }}
-        run: ansible-test integration -v --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
+        run: ansible-test integration -vv --requirements --allow-root --allow-destructive --color --retry-on-error --python ${{ matrix.python_version }} --continue-on-error --diff --coverage ${{ matrix.elastic_module }}
 
       - name: Upload Coverage data
         run: tests/coverage.sh

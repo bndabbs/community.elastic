@@ -1,7 +1,7 @@
 es_version:
     major: 7
-    minor: 11
-    patch: 1
+    minor: 13
+    patch: 3
 es_api_port: 9200
 es_transport_port: 9300
 es_auto_create_index: true
